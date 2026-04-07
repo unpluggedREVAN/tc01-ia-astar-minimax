@@ -18,12 +18,6 @@ class Tablero:
                             0 = abierta, 1 = J1, 2 = J2
       puntos              → [puntos_J1, puntos_J2]
       turno               → jugador que mueve ahora (1 o 2)
-
-    Una caja (f, c) está cerrada cuando tiene sus 4 lados:
-      arriba    → rayas_h[f][c]
-      abajo     → rayas_h[f+1][c]
-      izquierda → rayas_v[f][c]
-      derecha   → rayas_v[f][c+1]
     """
 
     def __init__(self, n=3):
@@ -34,19 +28,12 @@ class Tablero:
         self.puntos  = [0, 0]
         self.turno   = 1
 
-    # ── Copia ────────────────────────────────────────────────
-
     def clonar(self):
         """Retorna una copia profunda. El original nunca se modifica."""
         return copy.deepcopy(self)
 
-    # ── Movimientos ──────────────────────────────────────────
-
     def movimientos_legales(self):
-        """
-        Lista de todos los movimientos posibles desde este estado.
-        Cada movimiento es una tupla ('h', fila, col) o ('v', fila, col).
-        """
+        """Lista de todos los movimientos posibles: ('h',f,c) o ('v',f,c)."""
         movs = []
         for f in range(self.n + 1):
             for c in range(self.n):
@@ -61,13 +48,10 @@ class Tablero:
     def aplicar_movimiento(self, mov):
         """
         Aplica el movimiento sobre una copia y retorna (nuevo_tablero, cajas_cerradas).
-
         Si se cierran cajas, el turno NO cambia: el mismo jugador vuelve a mover.
-        Si no se cierra ninguna, el turno pasa al otro jugador.
         """
         nuevo = self.clonar()
         tipo, f, c = mov
-
         if tipo == 'h':
             nuevo.rayas_h[f][c] = self.turno
         else:
@@ -82,17 +66,9 @@ class Tablero:
         return nuevo, cerradas
 
     def _marcar_cajas_nuevas(self, tipo, f, c):
-        """
-        Revisa las cajas adyacentes a la raya recién puesta.
-        Marca las que quedaron completas y retorna cuántas fueron.
-        """
+        """Detecta y marca cajas que la raya recién puesta terminó de cerrar."""
         cerradas = 0
-        # Una raya horizontal (f,c) es el techo de la caja (f,c)
-        # y el piso de la caja (f-1,c).
-        # Una raya vertical (f,c) es el lado izquierdo de (f,c)
-        # y el lado derecho de (f,c-1).
         vecinos = [(f, c), (f-1, c)] if tipo == 'h' else [(f, c), (f, c-1)]
-
         for (bf, bc) in vecinos:
             if 0 <= bf < self.n and 0 <= bc < self.n:
                 if self.cajas[bf][bc] == 0 and self._caja_completa(bf, bc):
@@ -109,10 +85,8 @@ class Tablero:
             self.rayas_v[f][c + 1]
         )
 
-    # ── Consultas ────────────────────────────────────────────
-
     def es_terminal(self):
-        """True cuando todas las cajas están cerradas (juego terminado)."""
+        """True cuando todas las cajas están cerradas."""
         return all(
             self.cajas[f][c] != 0
             for f in range(self.n)
@@ -130,8 +104,6 @@ class Tablero:
 
     def ganador(self):
         """Retorna 1, 2, o 0 si hay empate."""
-        if self.puntos[0] > self.puntos[1]:
-            return 1
-        if self.puntos[1] > self.puntos[0]:
-            return 2
+        if self.puntos[0] > self.puntos[1]: return 1
+        if self.puntos[1] > self.puntos[0]: return 2
         return 0
